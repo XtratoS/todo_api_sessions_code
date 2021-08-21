@@ -1,4 +1,5 @@
 const { Todo } = require("../db");
+const { findByIdAndDelete } = require("../db/Todo");
 const { validationService } = require("../services");
 
 const getAllTodos = async (req, res) => {
@@ -8,7 +9,6 @@ const getAllTodos = async (req, res) => {
     } catch (e) {
         res.status(500).json({ ...e })
     }
-
 }
 
 const getTodoById = async (req, res) => {
@@ -37,4 +37,30 @@ const addTodo = async (req, res) => {
     }
 }
 
-module.exports = { getAllTodos, getTodoById, addTodo }
+const updateTodo = async (req, res) => {
+    const { todo_id } = req.params;
+    const { error } = validationService.validateTodo(req.body);
+    if (error) {
+        return res.status(400).json({ "message": error.details[0].message });
+    }
+    try {
+        const { title, description } = req.body;
+        const todo = await Todo.findByIdAndUpdate(id = todo_id, {title, description});
+        await todo.save();
+        res.json({message: "Updated todo", todo});
+    } catch (e) {
+        res.status(500).json({...e});
+    }
+}
+
+const removeTodo = async (req, res) => {
+    const { todo_id } = req.params;
+    const todo = await Todo.findByIdAndDelete(todo_id);
+    if (!todo) {
+        res.status(404).json({error: "not found"});
+        return;
+    }
+    res.json({message: "Deleted todo", todo});
+}
+
+module.exports = { getAllTodos, getTodoById, addTodo, updateTodo, removeTodo }
